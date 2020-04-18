@@ -6,12 +6,12 @@ type Node interface {
 
 type Statement interface {
 	Node
-	nodeStatement()
+	statementNode()
 }
 
 type Expression interface {
 	Node
-	nodeExpression()
+	expressionNode()
 }
 
 // this is root AST
