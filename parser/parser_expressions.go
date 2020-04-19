@@ -33,3 +33,16 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	return leftExp
 }
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	expr := &ast.PrefixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Literal,
+	}
+
+	p.nextToken()
+
+	expr.Right = p.parseExpression(PREFIX)
+
+	return expr
+}
