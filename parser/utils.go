@@ -1,6 +1,9 @@
 package parser
 
-import "github.com/avinassh/monkey/token"
+import (
+	"fmt"
+	"github.com/avinassh/monkey/token"
+)
 
 // checks if the current token is `t`
 func (p *Parser) curTokenIs(t token.TokenType) bool {
@@ -38,4 +41,9 @@ func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 
 func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
+}
+
+func (p *Parser) noPrefixParseFnError(t token.TokenType) {
+	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+	p.errors = append(p.errors, msg)
 }
