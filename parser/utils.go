@@ -14,6 +14,14 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 
 // is the next token `t`? if yes, then move the parser to next
 // else throw error
+//
+// from the book:
+// The expectPeek method is one of the “assertion functions” nearly
+// all parsers share. Their primary purpose is to enforce the correctness
+// of the order of tokens by checking the type of the next token. Our
+// expectPeek here checks the type of the peekToken and only if the
+// type is correct does it advance the tokens by calling nextToken.
+// As you’ll see, this is something a parser does a lot.
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
