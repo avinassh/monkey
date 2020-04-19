@@ -6,24 +6,10 @@ import (
 	"github.com/avinassh/monkey/token"
 )
 
-type Parser struct {
-	l      *lexer.Lexer
-	errors []string
-
-	curToken  token.Token
-	peekToken token.Token
-
-	prefixParseFns map[token.TokenType]prefixParseFn
-	infixParseFns  map[token.TokenType]infixParseFn
-}
-
-type (
-	prefixParseFn func() ast.Expression
-	infixParseFn  func(ast.Expression) ast.Expression
-)
-
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l, errors: []string{}}
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -99,4 +85,16 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	}
 
 	return stmt
+}
+
+// from book:
+// The parseIdentifier method doesn’t do a lot. It only returns a *ast.Identifier
+// with the current token in the Token field and the literal value of the token in
+// Value. It doesn’t advance the tokens, it doesn’t call nextToken. That’s important.
+// All of our parsing functions, prefixParseFn or infixParseFn, are going to follow
+// this protocol: start with curToken being the type of token you’re associated with
+// and return with curToken being the last token that’s part of your expression type.
+// Never advance the tokens too far.
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
