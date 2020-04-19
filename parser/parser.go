@@ -50,5 +50,25 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		Token: p.curToken,
 	}
 
+	// currently we are at `LET`, so we will peek and move, if the next token
+	// is an identifier or else return error
+	//
+	// e.g. LET X = 5;
+	if !p.expectPeek(token.IDENT) {
+		return nil
+	}
+
+	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+
+	if !p.expectPeek(token.ASSIGN) {
+		return nil
+	}
+
+	// TODO: We're skipping the expressions until we
+	// encounter a semicolon
+	for !p.curTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
 	return stmt
 }
