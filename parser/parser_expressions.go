@@ -92,15 +92,21 @@ func (p *Parser) parseIfExpression() ast.Expression {
 		},
 	}
 
+	// current token is `if`, so will move next which would be `( expression )`
 	p.nextToken()
 
+	// parse the `expression`
 	ifExp.Condition = p.parseExpression(LOWEST)
 
+	// we have parsed the condition, currently we are at `(`
+	// after the condition, next token should be `{`, so we will peek and move
+	// if not we will return
 	if !p.expectPeek(token.LBRACE) {
 		p.peekError(token.LBRACE)
 		return nil
 	}
 
+	// we are at `{`, so we will move next which would start the block
 	p.nextToken()
 
 	consequence := &ast.BlockStatement{}
@@ -113,5 +119,34 @@ func (p *Parser) parseIfExpression() ast.Expression {
 
 	ifExp.Consequence = consequence
 
+	// currently we are at `}`
+	// so we will move next and complete the if block
+	p.nextToken()
+
+	// if the next token is else, then we have an alternate block which we need to
+	// execute
+	if !p.curTokenIs(token.ELSE) {
+		return ifExp
+	}
+
+	// we are at `else` currently
+	// after else, we should have an `{`
+	if !p.expectPeek(token.LBRACE) {
+		p.peekError(token.LBRACE)
+		return nil
+	}
+
+	// we are at `{`
+	p.nextToken()
+
+	alternative := &ast.BlockStatement{}
+	for !p.curTokenIs(token.RBRACE) {
+		if stmt := p.parseStatement(); stmt != nil {
+			alternative.Statements = append(alternative.Statements, stmt)
+		}
+		p.nextToken()
+	}
+
+	ifExp.Alternative = alternative
 	return ifExp
 }
