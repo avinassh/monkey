@@ -157,7 +157,7 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	return bs
 }
 
-func (p *Parser) parseFnExpression() ast.Expression {
+func (p *Parser) parseFunctionLiteral() ast.Expression {
 	fn := &ast.FunctionLiteral{Token: p.curToken, Parameters: []*ast.Identifier{}}
 
 	// currently we are at token `fn`. Next token should be `(`, so, we will peek and
@@ -166,19 +166,7 @@ func (p *Parser) parseFnExpression() ast.Expression {
 		return nil
 	}
 
-	// currently we are at `(`, so will move next
-	p.nextToken()
-
-	for !p.curTokenIs(token.RPAREN) {
-		if !p.curTokenIs(token.IDENT) {
-			return nil
-		}
-		fn.Parameters = append(fn.Parameters, &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal})
-		if p.peekTokenIs(token.COMMA) {
-			p.nextToken()
-		}
-		p.nextToken()
-	}
+	fn.Parameters = p.parseFunctionParameters()
 
 	// we are now at `)`, so we will peek if the next token is `{`
 	if !p.expectPeek(token.LBRACE) {
@@ -190,4 +178,49 @@ func (p *Parser) parseFnExpression() ast.Expression {
 	// now the token will be at `}`
 
 	return fn
+}
+
+func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+	var identifiers []*ast.Identifier
+
+	// currently we are at `(`. If the next token is `)`, then this
+	// function has no parameters. So we will move next and return
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+		return identifiers
+	}
+
+	// we are at `(`, so we will move next and next token should be an
+	// identifier
+	if !p.expectPeek(token.IDENT) {
+		return nil
+	}
+
+	// our algorithm changes if there are one parameter or more than one.
+	// if its one, we will consume it first
+	// then we will check for next ones in a for loop, till the next token is
+	// comma
+	ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	identifiers = append(identifiers, ident)
+
+	// lets say we have three params: a, b, c
+	// `a` would have been consumed by previous statements. Next, will check if the
+	// peek is comma, if that is so, then we know that there should be one more
+	// identifier. So, we will move twice in the for loop. One move, will move us from
+	// `a` to `,`, the second move is `,` to `b`. Now the current token is `b` which
+	// is an identifier and we will consume it. And we will repeat the loop!
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+		identifiers = append(identifiers, ident)
+	}
+
+	// once all the identifiers have been consumed, the last token will be
+	// `)`
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return identifiers
 }
