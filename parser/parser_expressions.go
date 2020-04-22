@@ -85,19 +85,25 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 }
 
 func (p *Parser) parseIfExpression() ast.Expression {
-	ifExp := &ast.IfExpression{
-		Token: token.Token{
-			Type:    p.curToken.Type,
-			Literal: p.curToken.Literal,
-		},
+	ifExp := &ast.IfExpression{Token: p.curToken}
+
+	// current token is `if`, so will move next which would be `( condition )`
+	// so we will verify if the peek is `(` and move from `if` to `(`
+	if !p.expectPeek(token.LPAREN) {
+		return nil
 	}
 
-	// current token is `if`, so will move next which would be `( expression )`
+	// move next from `(`
 	p.nextToken()
 
-	// parse the `expression`
+	// parse the `condition`
 	ifExp.Condition = p.parseExpression(LOWEST)
 
+	// we have parsed the condition and at the last token of condition
+	// so peek token should be `)`. If so, we will move to it
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
 	// we have parsed the condition, currently we are at `(`
 	// after the condition, next token should be `{`, so we will peek and move
 	// if not we will return
@@ -106,47 +112,47 @@ func (p *Parser) parseIfExpression() ast.Expression {
 		return nil
 	}
 
-	// we are at `{`, so we will move next which would start the block
-	p.nextToken()
+	// we will parse the statement block. Current token is now at `{`
+	ifExp.Consequence = p.parseBlockStatement()
 
-	consequence := &ast.BlockStatement{}
-	for !p.curTokenIs(token.RBRACE) {
-		if stmt := p.parseStatement(); stmt != nil {
-			consequence.Statements = append(consequence.Statements, stmt)
-		}
-		p.nextToken()
-	}
-
-	ifExp.Consequence = consequence
-
-	// currently we are at `}`
-	// so we will move next and complete the if block
-	p.nextToken()
-
-	// if the next token is else, then we have an alternate block which we need to
+	// currently we are at `}`. So, do we have an ELSE later?
+	// if the peek token is else, then we have an alternate block which we need to
 	// execute
-	if !p.curTokenIs(token.ELSE) {
-		return ifExp
+	if p.peekTokenIs(token.ELSE) {
+
+		// we are at `}`, so we move to `ELSE`
+		p.nextToken()
+
+		// we are at `else` currently
+		// after else, we should have an `{`
+		if !p.expectPeek(token.LBRACE) {
+			return nil
+		}
+
+		// we will parse the statement block. Current token is now at `{`
+		ifExp.Alternative = p.parseBlockStatement()
+		// now the token will be at `{`
 	}
 
-	// we are at `else` currently
-	// after else, we should have an `{`
-	if !p.expectPeek(token.LBRACE) {
-		p.peekError(token.LBRACE)
-		return nil
-	}
+	return ifExp
+}
 
-	// we are at `{`
+// from book:
+// the tokens get advanced just enough so that parseBlockStatement sits on the { with p.curToken
+// being of type token.LBRACE.
+//
+// so we start the block statements with `{` at start. So we need to call p.nextToken() to
+// to start with the statements
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	bs := &ast.BlockStatement{Token: p.curToken, Statements: []ast.Statement{}}
+
 	p.nextToken()
 
-	alternative := &ast.BlockStatement{}
-	for !p.curTokenIs(token.RBRACE) {
+	for !p.curTokenIs(token.RBRACE) && !p.curTokenIs(token.EOF) {
 		if stmt := p.parseStatement(); stmt != nil {
-			alternative.Statements = append(alternative.Statements, stmt)
+			bs.Statements = append(bs.Statements, stmt)
 		}
 		p.nextToken()
 	}
-
-	ifExp.Alternative = alternative
-	return ifExp
+	return bs
 }
