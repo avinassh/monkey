@@ -224,3 +224,44 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 
 	return identifiers
 }
+
+func (p *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
+	callExp := &ast.CallExpression{Token: p.curToken, Function: fn,
+		Arguments: p.parseCallArguments()}
+	return callExp
+}
+
+func (p *Parser) parseCallArguments() []ast.Expression {
+	var args []ast.Expression
+
+	// currently we are at `(`, if the next immediate token is `)`,
+	// there are no args to parse
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+		return args
+	}
+
+	// so we will move from current token `(`
+	p.nextToken()
+	//  and parse the expression
+	args = append(args, p.parseExpression(LOWEST))
+
+	// then we will parse the rest of the expressions like how we
+	// did in `parseFunctionParameters`
+	for p.peekTokenIs(token.COMMA) {
+		// to move to `,`
+		p.nextToken()
+		// to move to the token of expression from the `,`
+		p.nextToken()
+
+		//  and then we will parse the expression
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	// at the end, we should have an `)`
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return args
+}
