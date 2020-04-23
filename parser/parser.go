@@ -91,8 +91,9 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	// lets parse the expression
 	stmt.Value = p.parseExpression(LOWEST)
 
-	if !p.expectPeek(token.SEMICOLON) {
-		return nil
+	// semi colons at the end are optional
+	if !p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
 	}
 
 	return stmt
@@ -109,8 +110,9 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	// lets parse the expression
 	stmt.ReturnValue = p.parseExpression(LOWEST)
 
-	if !p.expectPeek(token.SEMICOLON) {
-		return nil
+	// semi colons at the end are optional
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
 	}
 
 	return stmt
