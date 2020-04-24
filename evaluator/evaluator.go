@@ -49,8 +49,11 @@ func evalProgram(stmts []ast.Statement) object.Object {
 		// need to run next statements and we could do an early return
 		// since Eval returns ReturnObj for return statements, we will check
 		// if the `result` is ReturnObj
-		if resultObj, ok := result.(*object.ReturnValue); ok {
-			return resultObj.Value
+		switch result := result.(type) {
+		case *object.ReturnValue:
+			return result.Value
+		case *object.Error:
+			return result
 		}
 	}
 
@@ -69,8 +72,11 @@ func evalBlockStatement(stmts []ast.Statement) object.Object {
 		// If it’s object.RETURN_VALUE_OBJ we simply return the *object.ReturnValue, without unwrapping its .Value,
 		// so it stops execution in a possible outer block statement and bubbles up to evalProgram, where it finally
 		// get’s unwrapped.
-		if result != nil && result.Type() == object.RETURN_VALUE_OBJ {
-			return result
+		if result != nil {
+			rt := result.Type()
+			if rt == object.RETURN_VALUE_OBJ || rt == object.ERROR_OBJ {
+				return result
+			}
 		}
 	}
 
@@ -84,7 +90,7 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 	case "-":
 		return evalMinusOperatorExpression(right)
 	default:
-		return NULL
+		return newError("unknown operator: %s%s", operator, right.Type())
 	}
 }
 
@@ -98,7 +104,12 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 	if operator == token.NOT_EQ {
 		return nativeBoolToBooleanObject(left != right)
 	}
-	return NULL
+	if left.Type() != right.Type() {
+		return newError("type mismatch: %s %s %s",
+			left.Type(), operator, right.Type())
+	}
+	return newError("unknown operator: %s %s %s",
+		left.Type(), operator, right.Type())
 }
 
 func evalIfExpression(ie *ast.IfExpression) object.Object {
@@ -133,7 +144,8 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	case token.NOT_EQ:
 		return nativeBoolToBooleanObject(leftVal != rightVal)
 	default:
-		return NULL
+		return newError("unknown operator: %s %s %s",
+			left.Type(), operator, right.Type())
 	}
 }
 
@@ -152,7 +164,7 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 
 func evalMinusOperatorExpression(right object.Object) object.Object {
 	if right.Type() != object.INTEGER_OBJ {
-		return nil
+		return newError("unknown operator: -%s", right.Type())
 	}
 	obj := right.(*object.Integer)
 	return &object.Integer{Value: -obj.Value}
