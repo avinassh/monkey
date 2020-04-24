@@ -58,6 +58,12 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 	if left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ {
 		return evalIntegerInfixExpression(operator, left, right)
 	}
+	if operator == token.EQ {
+		return nativeBoolToBooleanObject(left == right)
+	}
+	if operator == token.NOT_EQ {
+		return nativeBoolToBooleanObject(left != right)
+	}
 	return NULL
 }
 
