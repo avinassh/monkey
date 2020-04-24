@@ -154,10 +154,10 @@ func TestReturnStatements(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		//{"return 10;", 10},
-		//{"return 10; 9;", 10},
-		//{"return 2 * 5; 9;", 10},
-		//{"9; return 2 * 5; 9;", 10},
+		{"return 10;", 10},
+		{"return 10; 9;", 10},
+		{"return 2 * 5; 9;", 10},
+		{"9; return 2 * 5; 9;", 10},
 
 		{
 			`

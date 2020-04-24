@@ -16,6 +16,14 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalBlockStatement(node.Statements, env)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
+	case *ast.LetStatement:
+		val := Eval(node.Value, env)
+		if isError(val) {
+			return val
+		}
+		env.Set(node.Name.Value, val)
+	case *ast.Identifier:
+		return evalIdentifier(node, env)
 
 	// Expressions
 	case *ast.IntegerLiteral:
@@ -184,4 +192,12 @@ func evalMinusOperatorExpression(right object.Object) object.Object {
 	}
 	obj := right.(*object.Integer)
 	return &object.Integer{Value: -obj.Value}
+}
+
+func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {
+	val, ok := env.Get(node.Value)
+	if !ok {
+		return newError("identifier not found: " + node.Value)
+	}
+	return val
 }
