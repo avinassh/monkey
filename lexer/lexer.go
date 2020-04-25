@@ -1,6 +1,8 @@
 package lexer
 
-import "github.com/avinassh/monkey/token"
+import (
+	"github.com/avinassh/monkey/token"
+)
 
 type Lexer struct {
 	input        string
@@ -78,6 +80,9 @@ func (l *Lexer) NextToken() token.Token {
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
+	case '"':
+		tok.Literal = l.readString()
+		tok.Type = token.STRING
 	default:
 		if isLetter(l.ch) {
 			tok.Literal = l.readIdentifier()
@@ -115,6 +120,19 @@ func (l *Lexer) readNumber() string {
 	start := l.position
 	for isDigit(l.ch) {
 		l.readChar()
+	}
+	return l.input[start:l.position]
+}
+
+func (l *Lexer) readString() string {
+	// currently we are at the start of `"` in "some string"
+	// so we will set our start position from one next
+	start := l.position + 1
+	for {
+		l.readChar()
+		if l.ch == '"' || l.ch == 0 {
+			break
+		}
 	}
 	return l.input[start:l.position]
 }
