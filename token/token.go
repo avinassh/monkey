@@ -41,6 +41,9 @@ const (
 	IF       = "IF"
 	ELSE     = "ELSE"
 	RETURN   = "RETURN"
+
+	// composite data structures
+	STRING = "STRING"
 )
 
 type Token struct {
