@@ -69,6 +69,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if len(args) == 1 && isError(args[0]) {
 			return args[0]
 		}
+		return applyFunction(function, args)
 	}
 	return nil
 }
@@ -235,4 +236,37 @@ func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Ob
 	}
 
 	return result
+}
+
+func applyFunction(fn object.Object, args []object.Object) object.Object {
+	function, ok := fn.(*object.Function)
+	if !ok {
+		return newError("not a function: %s", fn.Type())
+	}
+
+	extendedEnv := extendFunctionEnv(function, args)
+	evaluated := Eval(function.Body, extendedEnv)
+	return unwrapReturnValue(evaluated)
+}
+
+func extendFunctionEnv(fn *object.Function, args []object.Object) *object.Environment {
+	// create a new env from the fn's env
+	// from book:
+	// Instead we’ll use the environment our *object.Function carries around. Remember that one? That’s the environment
+	// our function was defined in.
+	env := object.NewEnclosedEnvironment(fn.Env)
+
+	// args basically contains values, either as raw values or as identifiers
+	// lets say the call argument is:
+	//
+	// fnCall(a, 10);
+	//
+	// fn.Parameters contain the list of parameters and args are the same, but of
+	// values. So we will set in the extended environment, taking the name from
+	// params and value from args
+	for paramIdx, param := range fn.Parameters {
+		env.Set(param.Value, args[paramIdx])
+	}
+
+	return env
 }

@@ -39,3 +39,12 @@ func isError(obj object.Object) bool {
 func newError(format string, a ...interface{}) *object.Error {
 	return &object.Error{Message: fmt.Sprintf(format, a...)}
 }
+
+// if the Object is of `ReturnValue` type, this method unwraps it
+// and returns the `ReturnValue` obj
+func unwrapReturnValue(obj object.Object) object.Object {
+	if returnValue, ok := obj.(*object.ReturnValue); ok {
+		return returnValue.Value
+	}
+	return obj
+}
