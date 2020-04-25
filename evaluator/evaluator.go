@@ -24,6 +24,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		env.Set(node.Name.Value, val)
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
+	case *ast.FunctionLiteral:
+		return evalFnLiteral(node, env)
 
 	// Expressions
 	case *ast.IntegerLiteral:
@@ -200,4 +202,12 @@ func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object
 		return newError("identifier not found: " + node.Value)
 	}
 	return val
+}
+
+func evalFnLiteral(node *ast.FunctionLiteral, env *object.Environment) object.Object {
+	return &object.Function{
+		Parameters: node.Parameters,
+		Body:       node.Body,
+		Env:        env,
+	}
 }
