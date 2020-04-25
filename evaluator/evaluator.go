@@ -238,6 +238,16 @@ func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Ob
 	return result
 }
 
+// from book:
+//
+// The extendFunctionEnv function creates a new *object.Environment that’s enclosed by the function’s environment.
+// In this new, enclosed environment it binds the arguments of the function call to the function’s parameter names.
+//
+// And this newly enclosed and updated environment is then the environment in which the function’s body is evaluated.
+// The result of this evaluation is unwrapped if it’s an *object.ReturnValue. That’s necessary, because otherwise a
+// return statement would bubble up through several functions and stop the evaluation in all of them. But we only want
+// to stop the evaluation of the last called function’s body. That’s why we need unwrap it, so that evalBlockStatement
+// won’t stop evaluating statements in “outer” functions.
 func applyFunction(fn object.Object, args []object.Object) object.Object {
 	function, ok := fn.(*object.Function)
 	if !ok {
