@@ -58,10 +58,13 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		return &object.ReturnValue{Value: val}
 	case *ast.CallExpression:
+		// we will evaluate call expressions, first we will eval the
+		// func part. This will have the relevant body of the function
 		function := Eval(node.Function, env)
 		if isError(function) {
 			return function
 		}
+		// and this will have all the parameters evaluated
 		args := evalExpressions(node.Arguments, env)
 		if len(args) == 1 && isError(args[0]) {
 			return args[0]
