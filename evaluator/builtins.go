@@ -1,11 +1,13 @@
 package evaluator
 
-import "github.com/avinassh/monkey/object"
+import (
+	"fmt"
+	"github.com/avinassh/monkey/object"
+)
 
 var builtins = map[string]*object.Builtin{
-	"len": {
-		Fn: lenFn,
-	},
+	"len":  {Fn: lenFn},
+	"puts": {Fn: puts},
 }
 
 func lenFn(args ...object.Object) object.Object {
@@ -20,4 +22,11 @@ func lenFn(args ...object.Object) object.Object {
 		return newError("argument to `len` not supported, got %s",
 			args[0].Type())
 	}
+}
+
+func puts(args ...object.Object) object.Object {
+	for _, arg := range args {
+		fmt.Println(arg.Inspect())
+	}
+	return NULL
 }
