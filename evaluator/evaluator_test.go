@@ -318,6 +318,28 @@ addTwo(2);`
 	testIntegerObject(t, testEval(input), 4)
 }
 
+func TestFullScript(t *testing.T) {
+	input := `
+let holiday = true;
+let today = "sunday";
+let test_holiday = fn(holiday) {
+	if (holiday) {
+  		today + " is holiday"
+	}
+};
+test_holiday(holiday);
+`
+	evaluated := testEval(input)
+	str, ok := evaluated.(*object.String)
+	if !ok {
+		t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
+	}
+
+	if str.Value != "sunday is holiday" {
+		t.Errorf("String has wrong value. got=%q", str.Value)
+	}
+}
+
 func TestStringLiteral(t *testing.T) {
 	input := `"Hello World!"`
 
