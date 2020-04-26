@@ -135,6 +135,9 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 	if left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ {
 		return evalIntegerInfixExpression(operator, left, right)
 	}
+	if left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ {
+		return evalStringInfixExpression(operator, left, right)
+	}
 	if operator == token.EQ {
 		return nativeBoolToBooleanObject(left == right)
 	}
@@ -187,6 +190,16 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 		return newError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
 	}
+}
+
+func evalStringInfixExpression(operator string, left, right object.Object) object.Object {
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.String).Value
+	if operator == token.PLUS {
+		return &object.String{Value: leftVal + rightVal}
+	}
+	return newError("unknown operator: %s %s %s",
+		left.Type(), operator, right.Type())
 }
 
 func evalBangOperatorExpression(right object.Object) object.Object {
