@@ -270,3 +270,33 @@ func (al *ArrayLiteral) String() string {
 
 	return out.String()
 }
+
+// any array index operations
+//
+// [1, 2, 3, 4][2];
+
+// let myArray = [1, 2, 3, 4];
+// myArray[2];
+
+// myArray[2 + 1];
+
+// returnsArray()[1];
+type IndexExpression struct {
+	Token token.Token
+	Left  Expression
+	Index Expression
+}
+
+func (ie *IndexExpression) expressionNode()      {}
+func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *IndexExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(ie.Left.String())
+	out.WriteString("[")
+	out.WriteString(ie.Index.String())
+	out.WriteString("])")
+
+	return out.String()
+}
