@@ -227,16 +227,16 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 
 func (p *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
 	callExp := &ast.CallExpression{Token: p.curToken, Function: fn,
-		Arguments: p.parseCallArguments()}
+		Arguments: p.parseExpressionList(token.RPAREN)}
 	return callExp
 }
 
-func (p *Parser) parseCallArguments() []ast.Expression {
+func (p *Parser) parseExpressionList(endToken token.TokenType) []ast.Expression {
 	var args []ast.Expression
 
 	// currently we are at `(`, if the next immediate token is `)`,
 	// there are no args to parse
-	if p.peekTokenIs(token.RPAREN) {
+	if p.peekTokenIs(endToken) {
 		p.nextToken()
 		return args
 	}
@@ -259,7 +259,7 @@ func (p *Parser) parseCallArguments() []ast.Expression {
 	}
 
 	// at the end, we should have an `)`
-	if !p.expectPeek(token.RPAREN) {
+	if !p.expectPeek(endToken) {
 		return nil
 	}
 
@@ -269,41 +269,6 @@ func (p *Parser) parseCallArguments() []ast.Expression {
 func (p *Parser) parseArrayLiteral() ast.Expression {
 	return &ast.ArrayLiteral{
 		Token:    p.curToken,
-		Elements: p.parseArrayArguments(),
+		Elements: p.parseExpressionList(token.RBRACKET),
 	}
-}
-
-func (p *Parser) parseArrayArguments() []ast.Expression {
-	var args []ast.Expression
-
-	// currently we are at `(`, if the next immediate token is `)`,
-	// there are no args to parse
-	if p.peekTokenIs(token.RBRACKET) {
-		p.nextToken()
-		return args
-	}
-
-	// so we will move from current token `(`
-	p.nextToken()
-	//  and parse the expression
-	args = append(args, p.parseExpression(LOWEST))
-
-	// then we will parse the rest of the expressions like how we
-	// did in `parseFunctionParameters`
-	for p.peekTokenIs(token.COMMA) {
-		// to move to `,`
-		p.nextToken()
-		// to move to the token of expression from the `,`
-		p.nextToken()
-
-		//  and then we will parse the expression
-		args = append(args, p.parseExpression(LOWEST))
-	}
-
-	// at the end, we should have an `)`
-	if !p.expectPeek(token.RBRACKET) {
-		return nil
-	}
-
-	return args
 }
