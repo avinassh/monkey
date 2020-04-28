@@ -231,6 +231,23 @@ func (p *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
 	return callExp
 }
 
+func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+	callExp := &ast.IndexExpression{Token: p.curToken, Left: left}
+
+	// currently we are at `[`, we will move one step
+	// and the current position will be at the start of index
+	//
+	// e.g. myArray[1 + 1] , after the following call, current token will be at `1`
+	p.nextToken()
+
+	callExp.Index = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.RBRACKET) {
+		return nil
+	}
+	return callExp
+}
+
 func (p *Parser) parseExpressionList(endToken token.TokenType) []ast.Expression {
 	var args []ast.Expression
 
