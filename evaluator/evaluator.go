@@ -78,6 +78,27 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return args[0]
 		}
 		return applyFunction(function, args)
+	case *ast.IndexExpression:
+		left := Eval(node.Left, env)
+		if isError(left) {
+			return left
+		}
+		array, ok := left.(*object.Array)
+		if !ok {
+			return nil
+		}
+		index := Eval(node.Index, env)
+		if isError(index) {
+			return index
+		}
+		idx, ok := index.(*object.Integer)
+		if !ok {
+			return NULL
+		}
+		if int(idx.Value) >= len(array.Elements) || idx.Value < 0 {
+			return NULL
+		}
+		return array.Elements[idx.Value]
 	}
 	return nil
 }
