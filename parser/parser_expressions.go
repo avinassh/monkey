@@ -289,3 +289,16 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 		Elements: p.parseExpressionList(token.RBRACKET),
 	}
 }
+
+func (p *Parser) parseHashLiteral() ast.Expression {
+	hl := &ast.HashLiteral{Token: p.curToken}
+
+	// currently we are at `{`, if the next immediate token is `}`,
+	// then this is an empty hash
+	if p.peekTokenIs(token.RBRACE) {
+		p.nextToken()
+		return hl
+	}
+
+	return hl
+}
