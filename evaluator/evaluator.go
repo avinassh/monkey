@@ -32,6 +32,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return items[0]
 		}
 		return &object.Array{Elements: items}
+	case *ast.HashLiteral:
+		return evalHashLiteral(node, env)
 
 	// Expressions
 	case *ast.IntegerLiteral:
@@ -255,6 +257,31 @@ func evalFnLiteral(node *ast.FunctionLiteral, env *object.Environment) object.Ob
 		Body:       node.Body,
 		Env:        env,
 	}
+}
+
+func evalHashLiteral(node *ast.HashLiteral, env *object.Environment) object.Object {
+	pairs := map[object.HashKey]object.HashPair{}
+	for kExp, vExp := range node.Pairs {
+		key := Eval(kExp, env)
+		if isError(key) {
+			return key
+		}
+
+		hashKey, ok := key.(object.Hashable)
+		if !ok {
+			return newError("unusable as hash key: %s", key.Type())
+		}
+
+		val := Eval(vExp, env)
+		if isError(val) {
+			return val
+		}
+		pairs[hashKey.HashKey()] = object.HashPair{
+			Key:   key,
+			Value: val,
+		}
+	}
+	return &object.Hash{Pairs: pairs}
 }
 
 func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
