@@ -300,5 +300,32 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 		return hl
 	}
 
+	// so we will move from current token `{`
+	p.nextToken()
+
+	//  and parse the expression, which will be our key
+	key := p.parseExpression(LOWEST)
+
+	// format is, <expression> : <expression>
+	// so next token should be :
+	if !p.expectPeek(token.COLON) {
+		return nil
+	}
+
+	// so we will move from current token `:`
+	p.nextToken()
+
+	// now will parse the value side of expression
+	value := p.parseExpression(LOWEST)
+
+	hl.Pairs = map[ast.Expression]ast.Expression{key: value}
+
+	// if the next token is `}`, then it has only one kv pair. So we will parse
+	// that and return
+	if p.peekTokenIs(token.RBRACE) {
+		p.nextToken()
+		return hl
+	}
+
 	return hl
 }
