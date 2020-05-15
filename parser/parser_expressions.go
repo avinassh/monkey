@@ -291,7 +291,7 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 }
 
 func (p *Parser) parseHashLiteral() ast.Expression {
-	hl := &ast.HashLiteral{Token: p.curToken}
+	hl := &ast.HashLiteral{Token: p.curToken, Pairs: map[ast.Expression]ast.Expression{}}
 
 	// currently we are at `{`, if the next immediate token is `}`,
 	// then this is an empty hash
@@ -303,29 +303,40 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 	// so we will move from current token `{`
 	p.nextToken()
 
-	//  and parse the expression, which will be our key
-	key := p.parseExpression(LOWEST)
+	// next we will parse everything in a for loop
+	for {
+		//  and parse the expression, which will be our key
+		key := p.parseExpression(LOWEST)
 
-	// format is, <expression> : <expression>
-	// so next token should be :
-	if !p.expectPeek(token.COLON) {
-		return nil
-	}
+		// format is, <expression> : <expression>
+		// so next token should be :
+		if !p.expectPeek(token.COLON) {
+			return nil
+		}
 
-	// so we will move from current token `:`
-	p.nextToken()
-
-	// now will parse the value side of expression
-	value := p.parseExpression(LOWEST)
-
-	hl.Pairs = map[ast.Expression]ast.Expression{key: value}
-
-	// if the next token is `}`, then it has only one kv pair. So we will parse
-	// that and return
-	if p.peekTokenIs(token.RBRACE) {
+		// so we will move from current token `:`
 		p.nextToken()
-		return hl
-	}
 
-	return hl
+		// now will parse the value side of expression
+		value := p.parseExpression(LOWEST)
+
+		hl.Pairs[key] = value
+
+		// we have parsed the value. Now what to do next depends on whats the next token.
+		// if the next token is `}`, then it has only one kv pair. So we will parse
+		// that and return
+		if p.peekTokenIs(token.RBRACE) {
+			p.nextToken()
+			return hl
+		}
+
+		// so the next token has to is `,`, then it has multiple kv pairs
+		// so will move from `,` and next will be the key of next kv pair
+		if !p.expectPeek(token.COMMA) {
+			return nil
+		}
+		// currently, we are comma, so we will move to next and we will be at
+		// the start of our next key
+		p.nextToken()
+	}
 }
