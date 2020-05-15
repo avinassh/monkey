@@ -84,7 +84,7 @@ func (ao *Array) Type() ObjectType { return ARRAY_OBJ }
 func (ao *Array) Inspect() string {
 	var out bytes.Buffer
 
-	elements := []string{}
+	var elements []string
 	for _, e := range ao.Elements {
 		elements = append(elements, e.Inspect())
 	}
